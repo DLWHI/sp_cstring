@@ -1,52 +1,88 @@
-CFLAGS= -std=c11 -Wall -Wextra -Werror
+LIBRARY := sp_cstring
 
-LCOV_FLAGS=-fprofile-arcs -ftest-coverage -lgcov
+NAMESPACE := sp
 
 INSTALL_PREFIX ?= /usr/local
+BUILD_DIR ?= build
+OBJ_DIR := $(BUILD_DIR)/obj
+LIB_DIR := $(BUILD_DIR)/lib
+SOURCES_DIR := src
+INCLUDE_DIR := include
+TESTS_DIR := tests
 
-all: libsp_cstring.a
+BUILD_TYPE ?= Release
 
-install: $(INSTALL_PREFIX)/lib $(INSTALL_PREFIX)/include/sp libsp_cstring.a
-	cp lib/libsp_cstring.a $(INSTALL_PREFIX)/lib/
-	cp include/sp/cstring.h $(INSTALL_PREFIX)/include/sp/
+MEMCHECK ?= valgrind
+MEMCHECK_FLAGS ?= --trace-children=yes --track-fds=yes --track-origins=yes --leak-check=full --show-leak-kinds=all -s
+
+CFLAGS = -std=c11
+LD_FLAGS = -L$(LIB_DIR) -l$(LIBRARY) -lcheck
+
+FSANITIZE := -fsanitize=address
+COVERAGE :=-fprofile-arcs -ftest-coverage -lgcov
+
+SOURCES := cstring.c
+TEST_SOURCES := test_cstring_create.c test_cstring_modification.c test_cstring_operations.c test_cstring_insertion.c
+
+SOURCES_PATH := $(addprefix $(SOURCES_DIR)/$(NAMESPACE)/, $(SOURCES))
+TEST_SOURCES_PATH := $(addprefix $(TESTS_DIR)/, $(TEST_SOURCES))
+OBJ_PATH := $(addprefix $(OBJ_DIR)/, $(SOURCES:%.c=%.o))
+
+TEST_EXE := tests_$(LIBRARY)
+
+ifeq ($(BUILD_TYPE), Release)
+	CFLAGS += -Wall -Wextra -Werror
+else ifeq ($(BUILD_TYPE), Sanitize)
+	CFLAGS += -g -fsanitize=address
+else ifeq ($(BUILD_TYPE), Debug)
+	CFLAGS += -g
+else
+$(error Unknown build type $(BUILD_TYPE))
+endif
+
+ifeq ($(OS), Windows_NT)
+else
+    OS = $(shell uname -s)
+	ifeq ($(OS), Linux)
+		LD_FLAGS += -lm -lsubunit
+	endif
+endif
+
+all: $(LIB_DIR)/lib$(LIBRARY).a
+
+install: $(LIB_DIR)/lib$(LIBRARY).a
+	@mkdir -p $(INSTALL_PREFIX)/lib
+	@mkdir -p $(INSTALL_PREFIX)/include/$(NAMESPACE)
+	cp $(LIB_DIR)/libsp_cstring.a $(INSTALL_PREFIX)/lib/
+	cp $(INCLUDE_DIR)/$(NAMESPACE)/cstring.h $(INSTALL_PREFIX)/include/$(NAMESPACE)/
 
 uninstall:
 	rm $(INSTALL_PREFIX)/lib/libsp_cstring.a
 	rm $(INSTALL_PREFIX)/include/sp/cstring.h
 
-tests: libsp_cstring.a
-	$(CC) $(CFLAGS) -Iinclude tests/test_cstring.c -Llib -lcheck -lm -lsubunit -lc_containers -o build/test_string
+$(LIB_DIR)/lib$(LIBRARY).a: $(OBJ_DIR)/cstring.o
+	@mkdir -p  $(LIB_DIR)
+	ar -rcs $(LIB_DIR)/lib$(LIBRARY).a $(OBJ_PATH)
+	ranlib $(LIB_DIR)/lib$(LIBRARY).a
 
-build/obj/cstring.o: build/obj
-	$(CC) $(CFLAGS) -Iinclude/sp -c src/sp/cstring.c -o build/obj/cstring.o
+tests: $(BUILD_DIR)/$(TEST_EXE) 
 
-build: build_dir libsp_cstring.a
+$(BUILD_DIR)/$(TEST_EXE): $(LIB_DIR)/lib$(LIBRARY).a $(TEST_SOURCES_PATH)
+	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) $(TEST_SOURCES_PATH) $(TESTS_DIR)/main.c $(LD_FLAGS) -o $(BUILD_DIR)/$(TEST_EXE)
 
-build_dir:
-	mkdir -p build
+$(OBJ_DIR)/%.o: $(SOURCES_DIR)/$(NAMESPACE)/%.c
+	@mkdir -p  $(OBJ_DIR)
+	$(CC) $(CFLAGS) -I$(INCLUDE_DIR)/$(NAMESPACE) -c $< -o $@
 
-build/obj: build_dir
-	mkdir -p build/obj
-
-$(INSTALL_PREFIX)/lib:
-	mkdir -p $(INSTALL_PREFIX)/lib
-
-$(INSTALL_PREFIX)/include/sp:
-	mkdir -p $(INSTALL_PREFIX)/include/sp
-
-lib:
-	mkdir -p lib
-
-libsp_cstring.a: lib build/obj/cstring.o
-	ar -rcs lib/libsp_cstring.a build/obj/cstring.o
-	ranlib lib/libsp_cstring.a
+memcheck: $(BUILD_DIR)/$(TEST_EXE)
+	$(MEMCHECK) $(MEMCHECK_FLAGS)  ./$(BUILD_DIR)/$(TEST_EXE)
 
 build_covered: add_coverage rebuild
 
 build_debug: add_debug rebuild
 
 clean:
-	rm -rf lib build
+	rm -rf build
 	rm -rf *.gcda *.gcno
 
 rebuild: clean $(LIB_NAME).a
@@ -55,3 +91,5 @@ add_coverage:
 	$(eval CFLAGS += --coverage)
 add_debug:
 	$(eval CFLAGS += -DDEBUG_MODE -g)
+
+.PHONY: all, clean, tests
