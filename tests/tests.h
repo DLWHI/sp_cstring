@@ -7,5 +7,6 @@ Suite* init_suite();
 Suite* modification_suite();
 Suite* operations_suite();
 Suite* insertion_suite();
+Suite* erasure_suite();
 
 #endif  // SP_CSTRING_TESTS_H_

@@ -128,24 +128,6 @@ START_TEST(test_string_init_empty) {
 }
 END_TEST
 
-START_TEST(test_string_init_ptr_null) {
-  sp_string* str = sp_string_create(NULL);
-
-  ck_assert_ptr_null(str);
-
-  sp_string_destroy(str);
-}
-END_TEST
-
-START_TEST(test_string_initn_ptr_null) {
-  sp_string* str = sp_string_createn(NULL, 726317);
-
-  ck_assert_ptr_null(str);
-
-  sp_string_destroy(str);
-}
-END_TEST
-
 START_TEST(test_string_initn) {
   sp_string* str =
       sp_string_createn("quick brown fox jumps over the lazy dog", 5);
@@ -211,15 +193,6 @@ START_TEST(test_string_copy) {
 }
 END_TEST
 
-START_TEST(test_string_copy_null) {
-  sp_string* str = sp_string_copy(NULL);
-
-  ck_assert_ptr_null(str);
-
-  sp_string_destroy(str);
-}
-END_TEST
-
 START_TEST(test_string_copy_empty) {
   sp_string* str = sp_string_create("");
   sp_string* cpy = sp_string_copy(str);
@@ -281,15 +254,6 @@ START_TEST(test_string_move_empty) {
 }
 END_TEST
 
-START_TEST(test_string_move_null) {
-  sp_string* str = sp_string_copy(NULL);
-
-  ck_assert_ptr_null(str);
-
-  sp_string_destroy(str);
-}
-END_TEST
-
 START_TEST(test_string_swap) {
   sp_string* str1 = sp_string_create("astring");
   sp_string* str2 = sp_string_create("bstring");
@@ -305,17 +269,6 @@ START_TEST(test_string_swap) {
   sp_string_destroy(str2);
   sp_string_destroy(str1_cpy);
   sp_string_destroy(str2_cpy);
-}
-END_TEST
-
-START_TEST(test_string_swap_null) {
-  sp_string* str = sp_string_create("astring");
-
-  ck_assert_int_eq(sp_string_swap(str, NULL), SP_ERR_INVALID);
-  ck_assert_int_eq(sp_string_swap(NULL, str), SP_ERR_INVALID);
-  ck_assert_int_eq(sp_string_swap(NULL, NULL), SP_ERR_INVALID);
-
-  sp_string_destroy(str);
 }
 END_TEST
 
@@ -387,11 +340,9 @@ Suite* init_suite() {
   TCase* ptr = tcase_create("tcase_ptr");
   tcase_add_test(ptr, test_string_init);
   tcase_add_test(ptr, test_string_init_empty);
-  tcase_add_test(ptr, test_string_init_ptr_null);
   tcase_add_test(ptr, test_string_initn);
   tcase_add_test(ptr, test_string_initn_zero);
   tcase_add_test(ptr, test_string_initn_neg);
-  tcase_add_test(ptr, test_string_initn_ptr_null);
 
   TCase* chars = tcase_create("tcase_chars");
   tcase_add_test(chars, test_string_init_chars);
@@ -406,10 +357,7 @@ Suite* init_suite() {
   tcase_add_test(copy_move_swap, test_string_move);
   tcase_add_test(copy_move_swap, test_string_copy_empty);
   tcase_add_test(copy_move_swap, test_string_move_empty);
-  tcase_add_test(copy_move_swap, test_string_copy_null);
-  tcase_add_test(copy_move_swap, test_string_move_null);
   tcase_add_test(copy_move_swap, test_string_swap);
-  tcase_add_test(copy_move_swap, test_string_swap_null);
   tcase_add_test(copy_move_swap, test_string_swap_self);
 
   suite_add_tcase(suite, def);

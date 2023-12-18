@@ -14,6 +14,7 @@ set(SOURCES
 set(TEST_SOURCES
     tests/main.c
     tests/test_cstring_create.c
+    tests/test_cstring_erasure.c
     tests/test_cstring_modification.c
     tests/test_cstring_operations.c
     tests/test_cstring_insertion.c

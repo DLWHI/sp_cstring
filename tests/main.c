@@ -2,15 +2,7 @@
 #include "tests.h"
 
 // TODO list:
-//  - assinn tests
-//  - assin_range tests
-//  - insertc tests
-//  - all iterator insertions tests
-//  - insert range tests
-//  - all erasure tests
-//  - trim left/right/general + tests
-//  - to lower/upper + tests
-//  ...
+//  - more tests
 
 int main() {
   int failed = 0;
@@ -20,6 +12,7 @@ int main() {
     modification_suite(),
     operations_suite(),
     insertion_suite(),
+    erasure_suite(),
     NULL
   };
 

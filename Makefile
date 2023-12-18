@@ -4,8 +4,10 @@ NAMESPACE := sp
 
 INSTALL_PREFIX ?= /usr/local
 BUILD_DIR ?= build
+COVERAGE_DIR ?= coverage
 OBJ_DIR := $(BUILD_DIR)/obj
 LIB_DIR := $(BUILD_DIR)/lib
+GCDA_DIR := $(BUILD_DIR)/gcov
 SOURCES_DIR := src
 INCLUDE_DIR := include
 TESTS_DIR := tests
@@ -13,7 +15,7 @@ TESTS_DIR := tests
 BUILD_TYPE ?= Release
 
 MEMCHECK ?= valgrind
-MEMCHECK_FLAGS ?= --trace-children=yes --track-fds=yes --track-origins=yes --leak-check=full --show-leak-kinds=all -s
+MEMCHECK_FLAGS ?= --trace-children=yes --track-fds=yes --track-origins=yes --leak-check=full --show-leak-kinds=all --log-file=$(BUILD_DIR)/memcheck_report.txt -s
 
 CFLAGS = -std=c11
 LD_FLAGS = -L$(LIB_DIR) -l$(LIBRARY) -lcheck
@@ -28,7 +30,7 @@ SOURCES_PATH := $(addprefix $(SOURCES_DIR)/$(NAMESPACE)/, $(SOURCES))
 TEST_SOURCES_PATH := $(addprefix $(TESTS_DIR)/, $(TEST_SOURCES))
 OBJ_PATH := $(addprefix $(OBJ_DIR)/, $(SOURCES:%.c=%.o))
 
-TEST_EXE := tests_$(LIBRARY)
+TEST_EXE = tests_$(LIBRARY)
 
 ifeq ($(BUILD_TYPE), Release)
 	CFLAGS += -Wall -Wextra -Werror
@@ -77,19 +79,7 @@ $(OBJ_DIR)/%.o: $(SOURCES_DIR)/$(NAMESPACE)/%.c
 memcheck: $(BUILD_DIR)/$(TEST_EXE)
 	$(MEMCHECK) $(MEMCHECK_FLAGS)  ./$(BUILD_DIR)/$(TEST_EXE)
 
-build_covered: add_coverage rebuild
-
-build_debug: add_debug rebuild
-
 clean:
-	rm -rf build
-	rm -rf *.gcda *.gcno
-
-rebuild: clean $(LIB_NAME).a
-
-add_coverage:
-	$(eval CFLAGS += --coverage)
-add_debug:
-	$(eval CFLAGS += -DDEBUG_MODE -g)
+	rm -rf build coverage
 
 .PHONY: all, clean, tests
