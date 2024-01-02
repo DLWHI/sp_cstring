@@ -223,7 +223,7 @@ int sp_string_reserve(sp_string* str, sp_size_t newsize) {
     char* ptr = realloc(str->ptr, newsize);
     ALLOC_CHECK(ptr, SP_ERR_BAD_ALLOC, ) {
       if (!str->len) {
-        str->ptr = '\0';
+        *str->ptr = '\0';
       }
       str->ptr = ptr;
       str->cap = newsize;
